@@ -10,13 +10,15 @@ from wcwidth import wcwidth
 
 class pylsytable(object):
 
-    def __init__(self, attributes):
+    def __init__(self, attributes, autodict=True):
         """Creates a new PylsyTable object with the given attrs (cols)."""
         self.StrTable = ""
         self.Table = []
         self.AttributesLength = []
         self.Lines_num = 0
-        if type(attributes) != list:
+        if type(attributes) == dict and autodict:
+            return from_dict(attributes)
+        elif type(attributes) != list:
             attributes = [attributes]
         self.Attributes = [u"{0}".format(attr) for attr in attributes]
         self.Cols_num = len(self.Attributes)
@@ -24,6 +26,24 @@ class pylsytable(object):
             col = dict()
             col[attribute] = []
             self.Table.append(col)
+
+    def from_dict(self, dic, cols=None):
+        """
+        Creates a new PylsyTable object from a dict<ustr, ustr[]>, optionally
+        with the given order of cols.
+        """
+        cols = dic.Keys() if cols is None else cols
+        self.__init__(cols, False)
+        for key in dic.keys():
+            self.add_data(key, dic[key])
+
+    def from_internal_dict(self, dic):
+        """Makes a PylsyTable object from the internal __dict__."""
+        # Look, the data structure really should be changed..
+        self.from_dict(
+            # See! I care about Python 2.6.
+            dict((col.keys()[0], col.values()[0]) for col in dic['Table']),
+            dic['Attributes'])
 
     def _print_divide(self):
         """Prints all those table line dividers."""
